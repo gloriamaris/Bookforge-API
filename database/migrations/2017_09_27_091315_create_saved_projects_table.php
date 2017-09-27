@@ -30,7 +30,7 @@ class CreateSavedProjectsTable extends Migration
                 ->onDelete('cascade');
             $table->foreign('project_template_id')
                 ->references('id')
-                ->on('project_template')
+                ->on('project_templates')
                 ->onDelete('cascade');
         });
     }
@@ -42,6 +42,9 @@ class CreateSavedProjectsTable extends Migration
      */
     public function down()
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('saved_projects');
+        Schema::enableForeignKeyConstraints();
+
     }
 }

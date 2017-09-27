@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateSubscriptionTable extends Migration
+class CreatePaymentsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,19 +13,17 @@ class CreateSubscriptionTable extends Migration
      */
     public function up()
     {
-        Schema::create('subscription', function (Blueprint $table) {
+        Schema::create('payments', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('type');
-            $table->date('expiration');
-            $table->integer('payment_id')->unsigned();
+            $table->integer('payment_type_id')->unsigned();
+            $table->string('status');
             $table->timestamps(); 
             $table->engine = 'InnoDB';
         }); 
-
-        Schema::table('subscription', function (Blueprint $table) {
-            $table->foreign('payment_id')
+        Schema::table('payments', function (Blueprint $table) {
+            $table->foreign('payment_type_id')
                 ->references('id')
-                ->on('payment')
+                ->on('payment_types')
                 ->onDelete('cascade');
         });
     }
@@ -37,6 +35,9 @@ class CreateSubscriptionTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('subscription');
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('payments');
+        Schema::enableForeignKeyConstraints();
+
     }
 }
