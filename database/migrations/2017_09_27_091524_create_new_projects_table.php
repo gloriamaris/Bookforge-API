@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateNewProjectTable extends Migration
+class CreateNewProjectsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,17 +13,17 @@ class CreateNewProjectTable extends Migration
      */
     public function up()
     {
-        Schema::create('new_project', function (Blueprint $table) {
+        Schema::create('new_projects', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('project_template_id')->unsigned();
             $table->timestamps(); 
             $table->engine = 'InnoDB';
         }); 
 
-        Schema::table('new_project', function (Blueprint $table) {
+        Schema::table('new_projects', function (Blueprint $table) {
             $table->foreign('project_template_id')
                 ->references('id')
-                ->on('project_template')
+                ->on('project_templates')
                 ->onDelete('cascade');
         });
     }
@@ -35,6 +35,8 @@ class CreateNewProjectTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('new_project');
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('new_projects');
+        Schema::enableForeignKeyConstraints();
     }
 }
