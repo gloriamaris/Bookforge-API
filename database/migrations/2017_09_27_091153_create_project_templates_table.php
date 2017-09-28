@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateProjectTemplateTable extends Migration
+class CreateProjectTemplatesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,14 @@ class CreateProjectTemplateTable extends Migration
      */
     public function up()
     {
-        Schema::create('project_template', function (Blueprint $table) {
+        Schema::create('project_templates', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('name');
+            $table->float('height', 9,2);
+            $table->float('width', 9,2);
+            $table->json('json_object');
             $table->timestamps();
+            $table->engine = 'InnoDB';
         });
     }
 
@@ -26,6 +31,6 @@ class CreateProjectTemplateTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('project_template');
+        Schema::dropIfExists('project_templates');
     }
 }

@@ -27,7 +27,7 @@ class CreateUsersTable extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('subscription_id')
                 ->references('id')
-                ->on('subscription')
+                ->on('subscriptions')
                 ->onDelete('cascade');
         });
     }
@@ -39,6 +39,8 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('users');
+        Schema::enableForeignKeyConstraints();
     }
 }

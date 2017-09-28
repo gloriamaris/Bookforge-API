@@ -13,18 +13,16 @@ class CreatePaymentTypeTable extends Migration
      */
     public function up()
     {
-        Schema::create('payment', function (Blueprint $table) {
+        Schema::create('payment_types', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('payment_type_id')->unsigned();
-            $table->string('status');
-            $table->timestamps(); 
+            $table->string('name');
+            $table->string('cc_name');
+            $table->string('cc_number');
+            $table->string('cvc');
+            $table->date('expiration');
+            $table->decimal('amount', 12, 2);
+            $table->timestamps();
             $table->engine = 'InnoDB';
-        }); 
-        Schema::table('payment', function (Blueprint $table) {
-            $table->foreign('payment_type_id')
-                ->references('id')
-                ->on('payment_type')
-                ->onDelete('cascade');
         });
     }
 
@@ -35,6 +33,8 @@ class CreatePaymentTypeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('payment_type');
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('payment_types'); 
+        Schema::enableForeignKeyConstraints();
     }
 }
