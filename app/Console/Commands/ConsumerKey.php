@@ -12,7 +12,7 @@ class ConsumerKey extends Command
      *
      * @var string
      */
-    protected $signature = 'consumer:generateKeys';
+    protected $signature = 'consumer:generateKeys {name}';
 
     /**
      * The console command description.
@@ -38,13 +38,22 @@ class ConsumerKey extends Command
      */
     public function handle()
     {
-        $conSecret = $this->ask('Enter secret: ');
-        $conKey = $this->ask('Enter key: '); 
+        $conName = $this->argument('name'); 
+
+        $this->info('Generating consumer key and secret for ' . $conName); 
+
+        $conSecret = substr(md5(mt_rand() . time()), -20);
+        $conKey = substr(md5(mt_rand() . time()), -40);
+
 
         DB::table('consumers')->insert(
-            ['name' => 'jeana', 'secret' => $conSecret, 'key' => $conKey]
+            ['name' => $conName, 'secret' => $conSecret, 'key' => $conKey, 'created_at' => \Carbon\Carbon::now(), 'updated_at' => \Carbon\Carbon::now()]
         ); 
 
-        $this->info('Secret and key has been generated');
+        $this->info('Consumer key and secret has been generated'); 
+        $this->info('Consumer Name: ' . $conName);
+        $this->info('Key: ' . $conKey);
+        $this->info('Secret: ' . $conSecret);
+        $this->info('Done.');
     }
 }
