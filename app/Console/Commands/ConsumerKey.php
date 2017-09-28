@@ -39,7 +39,6 @@ class ConsumerKey extends Command
     public function handle()
     {
         $conName = $this->argument('name'); 
-
         $generated = Consumer::generateKeys(); 
         $consumer = new Consumer; 
         $consumer->name = $conName; 
@@ -47,7 +46,6 @@ class ConsumerKey extends Command
         if (Consumer::where('name', $conName)->exists()){
             $this->error('Consumer name already exist. Try another consumer key.');
             return;
-
         } else {
             $this->info('Generating consumer key and secret for ' . $conName); 
             $consumer->key = $generated['key'];
