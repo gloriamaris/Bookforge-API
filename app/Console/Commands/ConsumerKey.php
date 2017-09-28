@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use DB;
+use App\Consumer;
 
 class ConsumerKey extends Command
 {
@@ -19,7 +19,7 @@ class ConsumerKey extends Command
      *
      * @var string
      */
-    protected $description = 'Generate consumer\'s key';
+    protected $description = 'Generate consumer key and secret';
 
     /**
      * Create a new command instance.
@@ -40,20 +40,25 @@ class ConsumerKey extends Command
     {
         $conName = $this->argument('name'); 
 
-        $this->info('Generating consumer key and secret for ' . $conName); 
+        $generated = Consumer::generateKeys(); 
+        $consumer = new Consumer; 
+        $consumer->name = $conName; 
 
-        $conSecret = substr(md5(mt_rand() . time()), -20);
-        $conKey = substr(md5(mt_rand() . time()), -40);
+        if (Consumer::where('name', $conName)->exists()){
+            $this->error('Consumer name already exist. Try another consumer key.');
+            return;
 
+        } else {
+            $this->info('Generating consumer key and secret for ' . $conName); 
+            $consumer->key = $generated['key'];
+            $consumer->secret = $generated['secret']; 
+            $consumer->save();
+            $this->info('Consumer Name: ' . $conName);
+            $this->info('Key: ' . $generated['key']);
+            $this->info('Secret: ' . $generated['secret']);
+            
+        }  
 
-        DB::table('consumers')->insert(
-            ['name' => $conName, 'secret' => $conSecret, 'key' => $conKey, 'created_at' => \Carbon\Carbon::now(), 'updated_at' => \Carbon\Carbon::now()]
-        ); 
-
-        $this->info('Consumer key and secret has been generated'); 
-        $this->info('Consumer Name: ' . $conName);
-        $this->info('Key: ' . $conKey);
-        $this->info('Secret: ' . $conSecret);
-        $this->info('Done.');
+        
     }
 }
