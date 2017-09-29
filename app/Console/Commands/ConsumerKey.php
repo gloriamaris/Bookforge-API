@@ -12,7 +12,7 @@ class ConsumerKey extends Command
      *
      * @var string
      */
-    protected $signature = 'consumer:generateKeys {name}';
+    protected $signature = 'oauth:generate-keys {name}';
 
     /**
      * The console command description.
