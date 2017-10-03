@@ -16,3 +16,11 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/signup',  [
+	'uses' => 'Auth\SignupController@signup'
+])->middleware('validateClientRequest');  
+
+Route::post('/login',  [
+	'uses' => 'Auth\SignupController@login'
+])->middleware('validateClientRequest'); 
