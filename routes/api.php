@@ -18,9 +18,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('/signup',  [
-	'uses' => 'Auth\SignupController@signup'
+	'uses' => 'Auth\UserController@signup'
 ])->middleware('validateClientRequest');  
 
 Route::post('/login',  [
-	'uses' => 'Auth\SignupController@login'
+	'uses' => 'Auth\UserController@login'
 ])->middleware('validateClientRequest'); 
