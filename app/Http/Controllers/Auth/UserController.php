@@ -34,15 +34,14 @@ class UserController extends Controller
          */
         $generated = User::generateToken(); 
         
-        $user = new User([
-            'username' => $request->input('uname'),
-            'first_name' => $request->input('fname'),
-            'last_name' => $request->input('lname'),
-            'email' => $request->input('email'),
-            'password' => bcrypt($request->input('password')),
-            'remember_token' => generated['remember_token'],
-            'access_token' => generated['access_token'],
-        ]); 
+        $user = new User;
+        $user->username = $request->input('uname');
+        $user->first_name = $request->input('fname');
+        $user->last_name = $request->input('lname');
+        $user->email = $request->input('email');
+        $user->password = bcrypt($request->input('password'));
+        $user->remember_token = $generated['remember_token'];
+        $user->access_token = $generated['access_token'];
         $user->save();
 
         return response()->json([
