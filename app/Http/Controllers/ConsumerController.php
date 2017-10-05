@@ -21,14 +21,26 @@ class ConsumerController extends Controller
 		$this->setAccessToken($token);	
 	}
 
+	/**
+	 * function to set the consumer key 
+	 * @param string $key 
+	 */
 	public function setConsumerKey($key) {
 		$this->consumerKey = $key;
 	} 
 
+	/**
+	 * function to set theconsumer secret 
+	 * @param string $secret
+	 */
 	public function setConsumerSecret($secret) {
 		$this->consumerSecret = $secret;
 	} 
 
+	/**
+	 * function to set the access token 
+	 * @param string $token 
+	 */
 	public function setAccessToken($token) {
 		$accessToken = null;
 
@@ -38,18 +50,34 @@ class ConsumerController extends Controller
 		$this->accessToken = $accessToken;
 	}
 
+	/**
+	 * function to get the consumer key
+	 * @return string $consumerKey
+	 */
 	public function getConsumerKey() {
 		$this->consumerKey;
 	} 
 
+	/**
+	 * function to get the consumer Secret
+	 * @return string consumerSecret
+	 */
 	public function getConsumerSecret() {
 		$this->consumerSecret;
 	} 
 
+	/**
+	 * function to get the access token
+	 * @return $string accessToken
+	 */
 	public function getAccessToken() {
 		$this->accessToken;
 	}
 
+	/**
+	 * function to get the consumer id using key and secret
+	 * @return int id
+	 */
 	public function getConsumerId() {
 		try {
 			$consumer = Consumer::where([ 
@@ -74,7 +102,10 @@ class ConsumerController extends Controller
 		}
 	}
 
-
+	/**
+	 * function to get the user's id using access token
+	 * @return [type] [description]
+	 */
 	public function getUserIdByToken() {
 		try {
 			$consumerToken = ConsumerToken::where([ 
@@ -85,7 +116,7 @@ class ConsumerController extends Controller
 			return $consumerToken->user_id;
 		} catch (\Exception $e) {
 			$errorMsg = 'Invalid token'; 
-			throw new APIHttpException(400, $errorMsg, $e->getMessage(), ['parameter'] => 'token');
+			throw new APIHttpException(400, $errorMsg, $e->getMessage(), ['parameter' => 'token']);
 			
 		}
 	}

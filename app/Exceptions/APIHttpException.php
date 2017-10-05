@@ -29,21 +29,46 @@ class APIHttpException extends HttpException
 		parent::__construct($statusCode, $message, $previous, $headers, $code);
 	} 
 
+	/**
+	 * function to get exception status code
+	 * @return int $statusCode
+	 */
 	public function getStatusCode()
 	{
 		return $this->statusCode;
 	} 
 
+	/**
+	 * function to get error message
+	 * @return string $msg
+	 */
 	public function getErrorMessage()
 	{
 		return $this->msg;
 	} 
 
+	/**
+	 * function to get the error details
+	 * @return string $details
+	 */
 	public function getErrorDetails()
+	{
+		return $this->details;
+	} 
+
+	/**
+	 * function to get the error source
+	 * @return array $source
+	 */
+	public function getSource()
 	{
 		return $this->source;
 	} 
 
+	/**
+	 * function to get the API error
+	 * @return object apiError
+	 */
 	public function getAPIError()
 	{
 		return $this->apiError;

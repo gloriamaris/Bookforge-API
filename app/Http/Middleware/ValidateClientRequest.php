@@ -9,6 +9,12 @@ use Closure;
 class ValidateClientRequest
 {
 
+    /**
+     * Gets the consumer key from the headers, if present
+     * else gets from the server
+     * @param  Request $request
+     * @return string $key
+     */
     public function getConsumerKey($request) {
         $key = $request->header('consumerKey');
 
@@ -19,6 +25,12 @@ class ValidateClientRequest
         return $key;
     } 
 
+    /**
+     * Gets the consumer secret from the headers, if present
+     * else gets from the server
+     * @param  [type] $request [description]
+     * @return [type]          [description]
+     */
     public function getConsumerSecret($request) {
         $secret = $request->header('consumerSecret'); 
 
@@ -30,7 +42,7 @@ class ValidateClientRequest
     }
 
     /**
-     * Handles the validation
+     * Validates the consumer key and secret
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next

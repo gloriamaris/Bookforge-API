@@ -13,13 +13,11 @@ class RemoveSubscriptionsFk extends Migration
      */
     public function up()
     {
-        if (Schema::hasColumn('subscriptions', 'payment_id')) {
-            Schema::table('subscriptions', function (Blueprint $table) {
-                // $table->dropForeign(['payment_id']);
-                $table->dropColumn('payment_id');
-            }); 
-        }
+        Schema::table('subscriptions', function (Blueprint $table) {
+            $table->integer('payment_id')->nullable()->unsigned()->change();
+        }); 
     }
+
 
     /**
      * Reverse the migrations.
