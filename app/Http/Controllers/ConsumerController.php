@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Consumer; 
 use App\ConsumerToken; 
+use App\Http\Controllers\Controller;
 
-/**
-* 
-*/
 class ConsumerController extends Controller
 {
 	private $consumerKey;
@@ -118,6 +116,7 @@ class ConsumerController extends Controller
 			$errorMsg = 'Invalid token'; 
 			throw new APIHttpException(400, $errorMsg, $e->getMessage(), ['parameter' => 'token']);
 			
+			return response()->json($errorMsg);
 		}
 	}
 

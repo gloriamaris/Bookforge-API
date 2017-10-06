@@ -6,43 +6,77 @@ use App\User;
 use App\Consumer;
 use App\ConsumerToken;
 use App\Http\Controllers\Controller; 
+use App\Http\Controllers\FormController; 
+use App\Http\Controllers\Auth\AccessTokenController; 
+use DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Exceptions\APIHttpException;
 
 class UserController extends Controller 
-{
+{ 
 
     public function signup(Request $request)
     {
         /**
          *
          * validates the user's inputs 
-         * 
+         *  
          */
-        $this->validate($request, [
-            'uname' => 'required|string|max:255',
-            'fname' => 'required|string|max:255',
-            'lname' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
+        $requiredFields = ['uname', 'fname', 'lname', 'email', 'password'];
+        $form = FormController::validateFormData($requiredFields, $request);
         
-
         /**
          * 
          * Create a new user instance after a valid registration.
          *
          */
-        $generated = User::generateToken(); 
-        
-        $user = new User;
-        $user->username = $request->input('uname');
-        $user->first_name = $request->input('fname');
-        $user->last_name = $request->input('lname');
-        $user->email = $request->input('email');
-        $user->password = bcrypt($request->input('password'));
-        $user->remember_token = $generated['remember_token'];
-        $user->access_token = $generated['access_token'];
-        $user->save();
+        try {
+            
+            DB::beginTransaction();
+
+                $generated = User::generateToken(); 
+            
+                $user = new User;
+                $user->username = $request->input('uname');
+                $user->first_name = $request->input('fname');
+                $user->last_name = $request->input('lname');
+                $user->email = $request->input('email');
+                $user->password = Hash::make($request->input('password'));
+                $user->remember_token = $generated['remember_token'];
+                $user->access_token = $generated['access_token'];
+                $user->save(); 
+
+                // $response = $this->login($request);
+
+            DB::commit();
+
+            return $response;
+
+        } catch (\Exception $e) {
+
+            if (strpos($e->getMessage(), 'user_exists')) {
+                $data = $this->login($request); 
+                return $data;
+            } else {
+
+            DB::rollback();
+            $errorCode = 400; 
+            $errorMsg = $e->getMessage(); 
+            $errorDetails = "Something went wrong with the execution while signing up."; 
+            $errorFields = $request; 
+
+            $error = [
+                'status' => $errorCode, 
+                'message' => $errorMsg, 
+                'details' => $errorDetails, 
+                'parameters' => $errorFields
+            ];
+
+            return response()->json($error);
+
+            }
+        }
 
         return response()->json([
                 'message' => 'Successfully created a user!'
@@ -56,27 +90,48 @@ class UserController extends Controller
      */
 
     public function login(Request $request)
-    {
-        $this->validate($request, [
-            'email' => 'required|string|email',
-            'password' => 'required|string|min:6',
-        ]); 
+    {   
+        $accessToken = AccessTokenController::getToken($request);
+        $expire = 86400;
+        $requiredFields = ['email', 'password'];
+        $form = FormController::validateFormData($requiredFields, $request);
 
         $user = User::where([
-            'email' =>$request->input('email'),
-            'password' =>$request->input('password'),
+            'email' => $form['email'],
+            'password' => Hash::check('plain-text' ,$form['password']),
         ])->first(); 
+
+        if (!isset($user)) {
+            $errorCode = 403;
+            $errorMsg = 'Invalid credentials.';
+            $errorDetails = 'Wrong email or password.';
+            $errorFields = ['email', 'password'];
+
+            throw new APIHttpException($errorCode, $errorMsg, $errorDetails, ['parameters' => $errorFields]);
+        }
 
         $consumer = Consumer::where([
             'key' => $request->header('consumerKey'),
             'secret' => $request->header('consumerSecret'),
         ])->first(); 
 
-        $auth = $this->storeToken($user->id, $consumer->id, $response['access_token'], 'active', $response['expires_in']);
+        if (!isset($consumer)) {
+            $errorCode = 403;
+            $errorMsg = 'Invalid credentials.';
+            $errorDetails = 'Wrong consumer key and/or secret';
+            $errorFields = ['key', 'secret'];
 
-        return response()->json([
-                'message' => 'Welcome',
-        ], 201);
+            throw new APIHttpException($errorCode, $errorMsg, $errorDetails, ['parameters' => $errorFields]);
+        }
+
+        $meta = $this->storeToken($user->id, $consumer->id, $accessToken, 'active', $expire); 
+
+        $data = [
+            'data' => $user,
+            'meta' => $meta
+        ];
+
+        return response()->json($data);
     } 
 
     /**
@@ -94,15 +149,40 @@ class UserController extends Controller
         ])->first(); 
 
         if (!isset($auth)) {
-            $auth = new ConsumerToken; 
 
-            $auth->user_id = $userId;
-            $auth->consumer_id = $consumerId;
-            $auth->token = $accessToken;
-            $auth->status = $status;
-            $auth->expires_in = $expiresIn;
+            try {
+                DB::beginTransaction();
+                $auth = new ConsumerToken; 
 
-            $auth->save();
+                $auth->user_id = $userId;
+                $auth->consumer_id = $consumerId;
+                $auth->token = $accessToken;
+                $auth->status = $status;
+                $auth->expires_in = $expiresIn;
+
+                $auth->save();
+
+                DB::commit();
+
+            } catch (\Exception $e) {
+                DB::rollback();
+
+                $errorCode = 400; 
+                $errorMsg = $e->getMessage(); 
+                $errorDetails = "Something went wrong with the execution."; 
+                $errorFields = $request; 
+
+                $error = [
+                    'status' => $errorCode, 
+                    'message' => $errorMsg, 
+                    'details' => $errorDetails, 
+                    'parameters' => $errorFields
+                ];
+
+            return response()->json($error);
+
+
+            }
         }
     }
 }

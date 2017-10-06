@@ -3,6 +3,7 @@
 namespace App\Http\Middleware; 
 
 use App\Consumer; 
+use App\ConsumerToken; 
 use App\Exceptions\APIHttpException;
 use Closure;
 
@@ -28,8 +29,8 @@ class ValidateClientRequest
     /**
      * Gets the consumer secret from the headers, if present
      * else gets from the server
-     * @param  [type] $request [description]
-     * @return [type]          [description]
+     * @param  Request $request from header
+     * @return string $secret
      */
     public function getConsumerSecret($request) {
         $secret = $request->header('consumerSecret'); 
@@ -39,7 +40,20 @@ class ValidateClientRequest
         }
 
         return $secret;
-    }
+    } 
+
+    // public function getAccessToken($request) {
+    //     $token = $request->header('Authorization'); 
+
+    //     if (!$token) {
+    //         $token = $request->server('Authorization');
+    //     } 
+
+    //     $token = explode(" ", $token);
+    //     $token = $token[1];
+
+    //     return $token;
+    // }
 
     /**
      * Validates the consumer key and secret
@@ -52,6 +66,7 @@ class ValidateClientRequest
     {
         $consumerKey = $this->getConsumerKey($request); 
         $consumerSecret = $this->getConsumerSecret($request); 
+        // $accessToken = $this->getAccessToken($request);
 
         if (!$consumerKey && !$consumerSecret) {
             throw new APIHttpException(401, "Missing consumer credentials", null, ['parameters' => 'headers']);
@@ -64,7 +79,17 @@ class ValidateClientRequest
 
         if (!$consumer) {
             throw new APIHttpException(401, "Invalid consumer credentials", null, ['parameters' => 'headers']);
-        }
+        } 
+
+        // $consumerToken = ConsumerToken::where([
+        //     'consumer_id' => $consumer->id,
+        //     'access_token' => $accessToken,
+        // ])->first(); 
+
+        // if (!$consumerToken) {
+        //     throw new APIHttpException(401, "Error Processing Request", null, ['parameters' => 'Authorization']);
+            
+        // }
 
         return $next($request);
     }

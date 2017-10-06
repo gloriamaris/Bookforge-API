@@ -29,3 +29,4 @@ class Admin extends Authenticatable
         'password', 'remember_token', 'access_token'
     ];
 }
+

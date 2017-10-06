@@ -67,7 +67,7 @@ class APIHttpException extends HttpException
 
 	/**
 	 * function to get the API error
-	 * @return object apiError
+	 * @return object $apiError
 	 */
 	public function getAPIError()
 	{
