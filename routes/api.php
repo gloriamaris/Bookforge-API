@@ -17,10 +17,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/signup',  [
+Route::post('/users',  [
 	'uses' => 'Auth\UserController@signup'
 ])->middleware('validateClientRequest');  
 
-Route::post('/login',  [
+Route::post('/authentication',  [
 	'uses' => 'Auth\UserController@login'
 ])->middleware('validateClientRequest'); 

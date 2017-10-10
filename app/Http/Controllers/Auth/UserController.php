@@ -47,7 +47,8 @@ class UserController extends Controller
                 $user->access_token = $generated['access_token'];
                 $user->save(); 
 
-                // $response = $this->login($request);
+                $response = $this->login($request); 
+                // var_dump($response);die();
 
             DB::commit();
 
@@ -91,8 +92,9 @@ class UserController extends Controller
 
     public function login(Request $request)
     {   
-        $accessToken = AccessTokenController::getToken($request);
+        
         $expire = 86400;
+
         $requiredFields = ['email', 'password'];
         $form = FormController::validateFormData($requiredFields, $request);
 
@@ -124,7 +126,9 @@ class UserController extends Controller
             throw new APIHttpException($errorCode, $errorMsg, $errorDetails, ['parameters' => $errorFields]);
         }
 
-        $meta = $this->storeToken($user->id, $consumer->id, $accessToken, 'active', $expire); 
+        $meta = $this->storeToken($user->id, $consumer->id, $user['access_token'], 'active', $expire); 
+        
+        // var_dump($meta);die();
 
         $data = [
             'data' => $user,
