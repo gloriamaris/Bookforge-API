@@ -17,7 +17,7 @@ class CreateSubscriptionsTable extends Migration
             $table->increments('id');
             $table->string('type');
             $table->date('expiration');
-            $table->integer('payment_id')->unsigned();
+            $table->integer('payment_id')->nullable()->unsigned();
             $table->timestamps(); 
             $table->engine = 'InnoDB';
         }); 
