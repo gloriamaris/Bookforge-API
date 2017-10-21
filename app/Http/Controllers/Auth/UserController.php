@@ -22,7 +22,7 @@ class UserController extends Controller
      */
     public function signup(Request $request)
     {
-        $requiredFields = ['uname', 'fname', 'lname', 'email', 'password'];
+        $requiredFields = ['username', 'firstname', 'lastname', 'email', 'password'];
         $form = FormController::validateFormData($requiredFields, $request);
 
         try {
@@ -32,9 +32,9 @@ class UserController extends Controller
                 $generated = User::generateToken();
 
                 $user = new User;
-                $user->username = $request->input('uname');
-                $user->first_name = $request->input('fname');
-                $user->last_name = $request->input('lname');
+                $user->username = $request->input('username');
+                $user->first_name = $request->input('firstname');
+                $user->last_name = $request->input('lastname');
                 $user->email = $request->input('email');
                 $user->password = Hash::make($request->input('password'));
                 $user->remember_token = $generated['remember_token'];
@@ -56,10 +56,14 @@ class UserController extends Controller
             } else {
               $errorCode = $e->getCode();
               $errorMsg = $e->getMessage();
+              if ($e->errorInfo[1] === 1062){
+                $errorDetails = 'Email address is already taken. Please try another email.';
+              } else
               $errorDetails = 'Something went wrong with the execution while signing up.';
               $errorFields = $requiredFields;
 
               $error = [
+                  'error_code' => $e->errorInfo[1],
                   'status' => $errorCode,
                   'message' => $errorMsg,
                   'details' => $errorDetails,
@@ -86,16 +90,20 @@ class UserController extends Controller
         $requiredFields = ['email', 'password'];
         $form = FormController::validateFormData($requiredFields, $request);
 
-        $user = User::where([
-            'email' => $form['email'],
-            'password' => Hash::check('plain-text' ,$form['password']),
-        ])->first();
+        $user = User::where('email', $form['email'])->first(); 
 
-        if (!isset($user)) {
+        if (!isset($user)) { 
             $errorCode = 403;
-            $errorMsg = 'Invalid credentials.';
+            $errorMsg = 'Invalid credentials. No user found';
             $errorDetails = 'Wrong email or password.';
-            $errorFields = ['email', 'password'];
+            $errorFields = ['email', 'password']; 
+
+            throw new APIHttpException($errorCode, $errorMsg, $errorDetails, ['parameters' => $errorFields]);
+        } else if (!Hash::check($form['password'], $user->password)) {
+            $errorCode = 403;
+            $errorMsg = 'Invalid credentials. Wrong password';
+            $errorDetails = 'Wrong password.';
+            $errorFields = ['password']; 
 
             throw new APIHttpException($errorCode, $errorMsg, $errorDetails, ['parameters' => $errorFields]);
         }
@@ -176,5 +184,6 @@ class UserController extends Controller
                 return response()->json($error);
             }
         }
+        return $auth;
     }
 }
