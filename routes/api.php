@@ -21,6 +21,6 @@ Route::post('/users',  [
 	'uses' => 'Auth\UserController@signup'
 ])->middleware('validateClientRequest');  
 
-Route::post('/authentication',  [
+Route::post('/authorization',  [
 	'uses' => 'Auth\UserController@login'
 ])->middleware('validateClientRequest'); 
