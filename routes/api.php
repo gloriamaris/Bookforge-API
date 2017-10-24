@@ -24,3 +24,7 @@ Route::post('/users',  [
 Route::post('/authorization',  [
 	'uses' => 'Auth\UserController@login'
 ])->middleware('validateClientRequest'); 
+
+Route::post('/subscriptions', [
+	'uses' => 'SubscriptionController@createSubscription'
+]);

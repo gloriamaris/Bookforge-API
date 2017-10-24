@@ -4,11 +4,12 @@ namespace App;
 
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable; 
-use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\HasApiTokens; 
+use Laravel\Cashier\Billable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, Billable;
 
     /**
      * The attributes that are mass assignable.
@@ -26,11 +27,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'remember_token', 'access_token'
-    ]; 
-
-    protected $attributes = [ 
-        'subscription_id' => 1,
+        'remember_token', 'access_token', 'password'
     ]; 
 
     public static function generateToken() {
@@ -41,5 +38,6 @@ class User extends Authenticatable
             ]; 
 
         return $generated;
-    }
+    } 
+
 }

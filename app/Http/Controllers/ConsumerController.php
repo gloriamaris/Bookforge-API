@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Consumer; 
 use App\ConsumerToken; 
 use App\Http\Controllers\Controller;
+use App\Exceptions\APIHttpException;
 
 class ConsumerController extends Controller
 {
