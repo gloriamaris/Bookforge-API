@@ -186,12 +186,4 @@ class UserController extends Controller
         }
         return $auth;
     } 
-
-    public function checkValidation (Request $request) { 
-        $authorization = $request->header('Authorization'); 
-        $authorization = explode(' ', $authorization)[1]; 
-        $userId = ConsumerToken::where('token', $authorization)->first(); 
-
-        return response()->json($userId);
-    }
 }
