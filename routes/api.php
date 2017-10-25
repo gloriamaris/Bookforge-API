@@ -27,4 +27,4 @@ Route::post('/authorization',  [
 
 Route::post('/subscriptions', [
 	'uses' => 'SubscriptionController@createSubscription'
-]);
+]); 

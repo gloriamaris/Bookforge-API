@@ -40,7 +40,7 @@ class ValidationController extends Controller
     /**
      * Gets the user id
      * 
-     * @return int $userIId
+     * @return int $userId
      */
     public function getUserId() {
         return $this->userId;

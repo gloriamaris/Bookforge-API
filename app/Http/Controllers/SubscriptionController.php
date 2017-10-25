@@ -3,17 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\ConsumerController;
+use App\Http\Controllers\ValidationController;
 use App\User;
 use App\ConsumerToken;
 use Illuminate\Http\Request; 
 
 
 class SubscriptionController extends Controller
-{
+{ 
+    private $userId;
+    
+    public function __construct(Request $request) {
+        $validation = new ValidationController($request);
+        $this->userId = $validation->getUserId();
+    }
+    /**
+     * Create new user subscription
+     *
+     * @param Request $request
+     * @return json
+     */
     public function createSubscription (Request $request) { 
-        $authorization = $request->header('Authorization'); 
-        $authorization = explode(' ', $authorization)[1]; 
-        $user = User::where('access_token', $authorization)->first(); 
+        $user = User::where('id', $this->userId)->first(); 
 
         $plan = $request->json('package'); 
 
@@ -30,5 +41,5 @@ class SubscriptionController extends Controller
         $user->newSubscription('main', $plan)->create($stripeToken->id); 
 
         return response()->json($user);
-    }  
+    } 
 }

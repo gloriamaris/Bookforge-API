@@ -54,7 +54,7 @@ class ConsumerController extends Controller
 	 * @return string $consumerKey
 	 */
 	public function getConsumerKey() {
-		$this->consumerKey;
+		return $this->consumerKey;
 	} 
 
 	/**
@@ -62,7 +62,7 @@ class ConsumerController extends Controller
 	 * @return string consumerSecret
 	 */
 	public function getConsumerSecret() {
-		$this->consumerSecret;
+		return $this->consumerSecret;
 	} 
 
 	/**
@@ -70,7 +70,7 @@ class ConsumerController extends Controller
 	 * @return $string accessToken
 	 */
 	public function getAccessToken() {
-		$this->accessToken;
+		return $this->accessToken;
 	}
 
 	/**
