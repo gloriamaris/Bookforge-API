@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateStripeColumns extends Migration
+class AddStripeColumns extends Migration
 {
     /**
      * Run the migrations.
@@ -19,23 +19,6 @@ class CreateStripeColumns extends Migration
             $table->string('card_last_four')->nullable();
             $table->string('trial_ends_at')->nullable();
         }); 
-
-        Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('subscriptions');
-
-        Schema::create('subscriptions', function (Blueprint $table) {
-            $table->increments('id');
-            $table->integer('user_id');
-            $table->string('name');
-            $table->string('stripe_id');
-            $table->string('stripe_plan');
-            $table->string('quantity'); 
-            $table->string('trial_ends_at')->nullable();
-            $table->string('ends_at')->nullable(); 
-            $table->timestamps();
-            
-        });
-
     }
 
     /**
@@ -51,8 +34,5 @@ class CreateStripeColumns extends Migration
             $table->dropColumn('card_last_four');
             $table->dropColumn('trial_ends_at');
         }); 
-        
-        Schema::dropIfExists('subscriptions');
-
     }
 }

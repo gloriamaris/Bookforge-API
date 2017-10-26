@@ -28,3 +28,17 @@ Route::post('/authorization',  [
 Route::post('/subscriptions', [
 	'uses' => 'SubscriptionController@createSubscription'
 ]); 
+
+Route::put('/subscriptions', [
+	'uses' => 'SubscriptionController@upgradeSubscription'
+]); 
+
+Route::get('/subscriptions', [
+	'uses' => 'SubscriptionController@getInvoice'
+]); 
+
+Route::delete('/subscriptions', [
+	'uses' => 'SubscriptionController@cancelSubscription'
+]); 
+
+Route::post('webhook/stripe', '\Laravel\Cashier\Http\Controllers\WebhookController@handleWebhook');
