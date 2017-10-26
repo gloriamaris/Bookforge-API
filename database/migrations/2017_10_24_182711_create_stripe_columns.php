@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddStripeColumns extends Migration
+class CreateStripeColumns extends Migration
 {
     /**
      * Run the migrations.
@@ -28,6 +28,7 @@ class AddStripeColumns extends Migration
             $table->integer('user_id');
             $table->string('name');
             $table->string('stripe_id');
+            $table->string('stripe_plan');
             $table->string('quantity'); 
             $table->string('trial_ends_at')->nullable();
             $table->string('ends_at')->nullable(); 
@@ -50,21 +51,8 @@ class AddStripeColumns extends Migration
             $table->dropColumn('card_last_four');
             $table->dropColumn('trial_ends_at');
         }); 
+        
+        Schema::dropIfExists('subscriptions');
 
-        Schema::create('subscriptions', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('type');
-            $table->date('expiration');
-            $table->integer('payment_id')->nullable()->unsigned();
-            $table->timestamps(); 
-            $table->engine = 'InnoDB';
-        }); 
-
-        Schema::table('subscriptions', function (Blueprint $table) {
-            $table->foreign('payment_id')
-                ->references('id')
-                ->on('payments')
-                ->onDelete('cascade');
-        });
     }
 }

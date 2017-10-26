@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Consumer; 
 use App\ConsumerToken; 
 use App\Http\Controllers\Controller;
+use App\Exceptions\APIHttpException;
 
 class ConsumerController extends Controller
 {
@@ -53,7 +54,7 @@ class ConsumerController extends Controller
 	 * @return string $consumerKey
 	 */
 	public function getConsumerKey() {
-		$this->consumerKey;
+		return $this->consumerKey;
 	} 
 
 	/**
@@ -61,7 +62,7 @@ class ConsumerController extends Controller
 	 * @return string consumerSecret
 	 */
 	public function getConsumerSecret() {
-		$this->consumerSecret;
+		return $this->consumerSecret;
 	} 
 
 	/**
@@ -69,7 +70,7 @@ class ConsumerController extends Controller
 	 * @return $string accessToken
 	 */
 	public function getAccessToken() {
-		$this->accessToken;
+		return $this->accessToken;
 	}
 
 	/**

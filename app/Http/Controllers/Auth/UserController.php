@@ -185,5 +185,5 @@ class UserController extends Controller
             }
         }
         return $auth;
-    }
+    } 
 }
