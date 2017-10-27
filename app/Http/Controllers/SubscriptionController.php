@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\APIHttpException;
 use App\Http\Controllers\ConsumerController;
 use App\Http\Controllers\ValidationController;
+use App\Http\Controllers\FormController;
 use App\User;
 use App\ConsumerToken;
 use App\Subscription;
+use DB;
 use Illuminate\Http\Request; 
+
 
 
 class SubscriptionController extends Controller
@@ -25,31 +29,73 @@ class SubscriptionController extends Controller
      * @return json
      */
     public function createSubscription (Request $request) { 
-        $user = User::where('id', $this->userId)->first(); 
-        $plan = $request->json('package'); 
-        \Stripe\Stripe::setApiKey($user->getStripeKey()); 
-        
-        if (!$user->subscription_id || $user->subscription('main')->cancelled()) { 
-            
-            $stripeToken = \Stripe\Token::create(array(
-                "card" => array(
-                    "number" => $request->json('number'),
-                    "exp_month" => $request->json('exp_month'),
-                    "exp_year" => $request->json('exp_year'),
-                    "cvc" => $request->json('cvc')
-                )
-            )); 
-            $subId = $user->newSubscription('main', $plan)->create($stripeToken->id); 
-            $user->subscription_id = $subId->id;
-            $user->save();
+        $requiredFields = ['cardNumber', 'expiryMonth', 'expiryYear', 'cvc', 'package']; 
+        $form = FormController::validateFormData($requiredFields, $request); 
 
-            $subId->status = 'active';
-            $subId->save();
-        } else {
-            return response()->json('Already subscribed!');
+        $cardData = [
+            'card' => [
+                'number' => $form['cardNumber'], 
+                'exp_month' => $form['expiryMonth'],
+                'exp_year' => $form['expiryYear'], 
+                'cvc' => $form['cvc']
+            ]
+        ];
+
+        $user = User::where('id', $this->userId)->first(); 
+
+        try {
+            \Stripe\Stripe::setApiKey($user->getStripeKey());
+            if (!$user->subscription_id || $user->subscription('main')->cancelled()) { 
+                try {
+                    DB::beginTransaction();
+                    $stripeToken = \Stripe\Token::create($cardData); 
+                    $subId = $user->newSubscription('main', $form['package'])->create($stripeToken->id); 
+                    $user->subscription_id = $subId->id;
+                    $user->save();
+
+                    DB::commit(); 
+
+                    try {
+                        DB::beginTransaction();
+        
+                        $subId->status = 'active';
+                        $subId->save();
+        
+                        DB::commit();
+                    } catch (\Exception $e){
+                        DB::rollback();
+        
+                        $errorMsg = 'There was an error in setting the subscription status.'; 
+                        $errorDetails = $e->getMessage(); 
+        
+                        throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subId]);
+        
+                    }
+
+                } catch (\Stripe\Error\Base $e) {
+                    DB::rollback();
+                    return response()->json($e->getMessage());
+                }
+                  
+            } else { 
+                $errorMsg = 'Cannot create user subscription.';
+                $errorDetails = 'You are already subscribed!';
+                throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $user]);
+            }
+            
+            
+        } catch (\Stripe\Error\Base $e) {
+            DB::rollback();
+
+            throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $requiredFields]);
         } 
 
-            return response()->json($user);
+        $user = [
+            'username' => $user->username,
+            'stripe_plan' => $subId->stripe_plan,
+            'status' => $subId->status
+        ];
+        return response()->json($user);
     } 
     
     /**
@@ -58,19 +104,37 @@ class SubscriptionController extends Controller
      * @param Request $request
      * @return void
      */
-    public function upgradeSubscription (Request $request) {
-        $user = User::where('id', $this->userId)->first(); 
-        $plan = $request->json('package'); 
-        $subscription = Subscription::where('user_id', $this->userId)->first(); 
-        \Stripe\Stripe::setApiKey($user->getStripeKey()); 
+    public function upgradeSubscription (Request $request) { 
+        $requiredFields = ['package']; 
+        $form = FormController::validateFormData($requiredFields, $request);
 
-        if (\Stripe\Subscription::retrieve($subscription->stripe_id)) {
-            $subscription = $user->subscription('main')->swap($plan);      
-        } else {
-            return response()->json('No subscription found');
-        }
-        
-        return response()->json($subscription);
+        $user = User::where('id', $this->userId)->first(); 
+        $subscription = Subscription::where('user_id', $this->userId)->first();
+        try {
+            DB::beginTransaction();
+            \Stripe\Stripe::setApiKey($user->getStripeKey()); 
+            
+            if (\Stripe\Subscription::retrieve($subscription->stripe_id)) {
+                $subscription = $user->subscription('main')->swap($form['package']);  
+                DB::commit();    
+            } else { 
+                DB::rollback();
+                $errorMsg = 'Cannot update user subscription.';
+                $errorDetails = 'There was an error updating your subscription.';
+                throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $user]);
+            }
+        } catch (\Stripe\Error\Base $e) { 
+            
+            return response()->json($e->getMessage());
+        } 
+
+        $user = [
+            'username' => $user->username,
+            'stripe_plan' => $subscription->stripe_plan,
+            'status' => $subscription->status
+        ];
+        return response()->json($user);
+
     } 
     /**
      * Generate list of user's invoice
@@ -79,7 +143,12 @@ class SubscriptionController extends Controller
      */
     public function getInvoice() {
         $user = User::where('id', $this->userId)->first(); 
+        try {
         \Stripe\Stripe::setApiKey($user->getStripeKey()); 
+
+        } catch (\Stripe\Error\Base $e) { 
+            return response()->json($e->getMessage());
+        } 
 
         return response()->json(\Stripe\Invoice::all());
         
@@ -93,27 +162,69 @@ class SubscriptionController extends Controller
     public function cancelSubscription () {
         $user = User::where('id', $this->userId)->first(); 
         $subscription = Subscription::where('id', $user->subscription_id)->first(); 
-        \Stripe\Stripe::setApiKey($user->getStripeKey()); 
+        
+        try {
+            \Stripe\Stripe::setApiKey($user->getStripeKey()); 
 
-        if ($user->subscription_id) { 
-            $stripeSubscription = \Stripe\Subscription::retrieve($subscription->stripe_id);
+            if ($user->subscription_id !== null) {
 
-            if ($stripeSubscription->status === 'active') {
-                $stripeSubscription->cancel(); 
+                $stripeSubscription = \Stripe\Subscription::retrieve($subscription->stripe_id);
+                if ($stripeSubscription->status === 'active') { 
+                
+                    try { 
+                        DB::beginTransaction();
+                        $stripeSubscription->cancel();                         
+                        $subscription->status = 'canceled';
+                        $subscription->save(); 
+                        DB::commit();
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        $errorMsg = 'Failed to cancel subscription status in the database';
+                        $errorDetails = $e->getMessage();
+                        throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subscription]);
+                    }
+                    try { 
+                        DB::beginTransaction();
+                        $user->subscription_id = null;
+                        $user->save(); 
+                        DB::commit();
+                
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        $errorMsg = 'Failed to cancel subscription status in the database';
+                        $errorDetails = $e->getMessage();
+                        throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subscription]);
+                    }
 
-                $subscription->status = 'canceled';
-                $subscription->save();
 
-                $user->subscription_id = null;
-                $user->save(); 
-                return response()->json($subscription);
-            } 
-            else if ($subscription->status === 'canceled'){
-                return response()->json('Already cancelled!');
+                    $user = [
+                        'username' => $user->username,
+                        'stripe_plan' => $subscription->stripe_plan,
+                        'status' => $subscription->status
+                    ];
+                    return response()->json($user);
+
+                } 
+                
+                else if ($subscription->status === 'canceled'){
+                    $errorMsg = 'Subscription is already cancelled.';
+                    $errorDetails = 'Subscription status is already cancelled.';
+                    throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subscription]);
+
+                } else if (!$stripeSubscription){
+                    $errorMsg = 'No subscription found';
+                    $errorDetails = 'Subscription id does not exist!';
+                    throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subscription]);
+                }
+            } else {
+                $errorMsg = 'Cannot cancel user subscription.';
+                $errorDetails = 'There was an error in cancelling your subscription.';
+                throw new APIHttpException(400, $errorMsg, $errorDetails, ['parameters' => $subscription]);
             }
-        } else {
-            return response()->json('Not subscribed!');
+        } catch (\Stripe\Error\Base $e) {
+
+            return response()->json($e->getMessage());
         }
-        return response()->json($user);
     }
+
 }
